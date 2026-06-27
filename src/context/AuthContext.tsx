@@ -64,6 +64,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     Cookies.remove('user_name');
     Cookies.remove('user_email');
     Cookies.remove('user_id');
+
+    // Force redirection to login and clear caches
+    window.location.href = '/login';
   };
 
   return (
