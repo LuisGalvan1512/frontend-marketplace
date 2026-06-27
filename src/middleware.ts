@@ -6,17 +6,25 @@ export function middleware(request: NextRequest) {
   
   const { pathname } = request.nextUrl;
 
-  // Protect /admin route
-  if (pathname.startsWith('/admin')) {
-    if (!token || userRole !== 'ADMIN') {
-      // Redirect to home page if not authorized
-      return NextResponse.redirect(new URL('/', request.url));
+  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register');
+
+  // 1. If NOT logged in: redirect any request (except /login or /register) to /login
+  if (!token) {
+    if (!isAuthPage) {
+      return NextResponse.redirect(new URL('/login', request.url));
     }
+    return NextResponse.next();
   }
 
-  // Prevent logged in users from accessing login or register pages
-  if (pathname.startsWith('/login') || pathname.startsWith('/register')) {
-    if (token) {
+  // 2. If logged in:
+  // Redirect logged-in users away from /login or /register to /
+  if (isAuthPage) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  // Restrict /admin to ADMIN role only
+  if (pathname.startsWith('/admin')) {
+    if (userRole !== 'ADMIN') {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
@@ -24,7 +32,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Config to specify matching routes
+// Protect all routes except static assets, favicon, and API paths
 export const config = {
-  matcher: ['/admin/:path*', '/login', '/register'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
